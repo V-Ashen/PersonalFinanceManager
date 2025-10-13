@@ -11,6 +11,7 @@ import com.example.personalfinancemanager.data.AppDatabase
 import com.example.personalfinancemanager.data.Category
 import com.example.personalfinancemanager.data.Expense
 import com.example.personalfinancemanager.data.User
+import com.example.personalfinancemanager.network.RetrofitInstance // <-- NEW IMPORT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,6 +31,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var editTextDescription: EditText
     private lateinit var spinnerCategory: Spinner
     private lateinit var buttonSaveExpense: Button
+    private lateinit var buttonSync: Button // <-- ADDED
 
     private var categoryList: List<Category> = emptyList()
 
@@ -42,6 +44,7 @@ class MainActivity : AppCompatActivity() {
         editTextDescription = findViewById(R.id.editTextDescription)
         spinnerCategory = findViewById(R.id.spinnerCategory)
         buttonSaveExpense = findViewById(R.id.buttonSaveExpense)
+        buttonSync = findViewById(R.id.buttonSync) // <-- ADDED
 
         // Load data from database
         setupInitialData()
@@ -50,6 +53,13 @@ class MainActivity : AppCompatActivity() {
         buttonSaveExpense.setOnClickListener {
             saveExpense()
         }
+
+        // --- NEW ---
+        // Set up the sync button click listener
+        buttonSync.setOnClickListener {
+            syncData()
+        }
+        // --- END NEW ---
     }
 
     private fun setupInitialData() {
@@ -113,7 +123,7 @@ class MainActivity : AppCompatActivity() {
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val currentDate = sdf.format(Date())
 
-        // Create the Expense object
+        // Create the Expense object. It will default to 'unsynced'.
         val newExpense = Expense(
             userId = currentUserId,
             categoryId = selectedCategory.categoryId,
@@ -127,7 +137,7 @@ class MainActivity : AppCompatActivity() {
             db.expenseDao().insertExpense(newExpense)
             // Show a confirmation message on the UI thread
             withContext(Dispatchers.Main) {
-                Toast.makeText(this@MainActivity, "Expense Saved!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, "Expense Saved Locally!", Toast.LENGTH_SHORT).show()
                 // Clear the form for the next entry
                 editTextAmount.text.clear()
                 editTextDescription.text.clear()
@@ -135,8 +145,53 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // You need to add this function to your UserDao interface
-    // Go to UserDao.kt and add:
-    // @Query("SELECT * FROM users WHERE userId = :id")
-    // suspend fun getUserById(id: Int): User?
+    // =========================================================================
+    // --- NEW SYNC FUNCTION ---
+    // =========================================================================
+    private fun syncData() {
+        // Show a message to the user that sync is starting
+        Toast.makeText(this, "Syncing data...", Toast.LENGTH_SHORT).show()
+
+        // Run all networking and DB operations in the background
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // 1. Get all unsynced expenses from the local Room database
+                val unsyncedExpenses = db.expenseDao().getUnsyncedExpenses()
+
+                // If there's nothing to sync, show a message and stop.
+                if (unsyncedExpenses.isEmpty()) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@MainActivity, "No new data to sync.", Toast.LENGTH_SHORT).show()
+                    }
+                    return@launch
+                }
+
+                // 2. Use Retrofit to send the data to our API
+                val response = RetrofitInstance.api.syncExpenses(unsyncedExpenses)
+
+                // 3. Handle the response from the server on the Main thread
+                withContext(Dispatchers.Main) {
+                    if (response.isSuccessful && response.body()?.status == "success") {
+                        // If sync was successful, update the local database
+                        val idsToUpdate = unsyncedExpenses.map { it.expenseId }
+                        // We launch another background coroutine for this DB operation
+                        CoroutineScope(Dispatchers.IO).launch {
+                            db.expenseDao().updateSyncStatus(idsToUpdate)
+                        }
+                        Toast.makeText(this@MainActivity, "Sync successful!", Toast.LENGTH_LONG).show()
+                    } else {
+                        // If the server returned an error (e.g., 400, 500)
+                        val errorMessage = response.errorBody()?.string() ?: "Unknown sync error"
+                        Toast.makeText(this@MainActivity, "Sync failed: $errorMessage", Toast.LENGTH_LONG).show()
+                    }
+                }
+
+            } catch (e: Exception) {
+                // If there was a network error (e.g., no internet, server is down)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivity, "Sync failed: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
 }

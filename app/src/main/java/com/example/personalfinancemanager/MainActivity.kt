@@ -2,196 +2,111 @@ package com.example.personalfinancemanager
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.Spinner
 import android.widget.Toast
-import com.example.personalfinancemanager.data.AppDatabase
+import androidx.activity.viewModels
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.personalfinancemanager.data.Category
-import com.example.personalfinancemanager.data.Expense
-import com.example.personalfinancemanager.data.User
-import com.example.personalfinancemanager.network.RetrofitInstance // <-- NEW IMPORT
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.example.personalfinancemanager.ui.ExpenseAdapter
+import com.example.personalfinancemanager.ui.MainViewModel
 
 class MainActivity : AppCompatActivity() {
 
-    // --- Database Reference ---
-    private val db by lazy { AppDatabase.getDatabase(this) }
-    private var currentUserId = 1 // Hardcoding user ID for now
+    // --- ViewModel ---
+    private val viewModel: MainViewModel by viewModels()
 
     // --- UI References ---
     private lateinit var editTextAmount: EditText
     private lateinit var editTextDescription: EditText
     private lateinit var spinnerCategory: Spinner
     private lateinit var buttonSaveExpense: Button
-    private lateinit var buttonSync: Button // <-- ADDED
+    private lateinit var buttonSync: Button
+    private lateinit var recyclerViewExpenses: RecyclerView
+    private lateinit var progressBar: ProgressBar
 
+    private lateinit var expenseAdapter: ExpenseAdapter
     private var categoryList: List<Category> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        setupUI()
+        setupObservers()
+        setupListeners()
+    }
+
+    private fun setupUI() {
         // Initialize UI components
         editTextAmount = findViewById(R.id.editTextAmount)
         editTextDescription = findViewById(R.id.editTextDescription)
         spinnerCategory = findViewById(R.id.spinnerCategory)
         buttonSaveExpense = findViewById(R.id.buttonSaveExpense)
-        buttonSync = findViewById(R.id.buttonSync) // <-- ADDED
+        buttonSync = findViewById(R.id.buttonSync)
+        recyclerViewExpenses = findViewById(R.id.recyclerViewExpenses)
+        progressBar = findViewById(R.id.progressBar)
 
-        // Load data from database
-        setupInitialData()
+        // Setup RecyclerView
+        expenseAdapter = ExpenseAdapter(emptyList())
+        recyclerViewExpenses.adapter = expenseAdapter
+        recyclerViewExpenses.layoutManager = LinearLayoutManager(this)
+    }
 
-        // Set up the save button click listener
+    private fun setupListeners() {
         buttonSaveExpense.setOnClickListener {
-            saveExpense()
+            val selectedCategory = if (spinnerCategory.selectedItemPosition >= 0 && categoryList.isNotEmpty()) {
+                categoryList[spinnerCategory.selectedItemPosition]
+            } else {
+                null
+            }
+            viewModel.saveExpense(
+                editTextAmount.text.toString(),
+                editTextDescription.text.toString(),
+                selectedCategory
+            )
         }
 
-        // --- NEW ---
-        // Set up the sync button click listener
         buttonSync.setOnClickListener {
-            syncData()
-        }
-        // --- END NEW ---
-    }
-
-    private fun setupInitialData() {
-        // Run database operations in the background
-        CoroutineScope(Dispatchers.IO).launch {
-            // Check if our test user exists, if not, create it.
-            val user = db.userDao().getUserById(currentUserId)
-            if (user == null) {
-                db.userDao().insertUser(User(userId = currentUserId, username = "testuser", email = "test@email.com"))
-            }
-
-            // Add default categories if none exist for this user
-            val categories = db.categoryDao().getCategoriesForUser(currentUserId)
-            if (categories.isEmpty()) {
-                db.categoryDao().insertCategory(Category(userId = currentUserId, name = "Groceries"))
-                db.categoryDao().insertCategory(Category(userId = currentUserId, name = "Transport"))
-                db.categoryDao().insertCategory(Category(userId = currentUserId, name = "Bills"))
-            }
-
-            // Load categories into the spinner on the main thread
-            withContext(Dispatchers.Main) {
-                loadCategoriesIntoSpinner()
-            }
+            viewModel.syncData()
         }
     }
 
-    private fun loadCategoriesIntoSpinner() {
-        CoroutineScope(Dispatchers.IO).launch {
-            // Fetch the categories from the database
-            categoryList = db.categoryDao().getCategoriesForUser(currentUserId)
-            val categoryNames = categoryList.map { it.name }
-
-            // Update the spinner on the UI thread
-            withContext(Dispatchers.Main) {
-                val adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_item, categoryNames)
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                spinnerCategory.adapter = adapter
-            }
-        }
-    }
-
-    private fun saveExpense() {
-        val amountStr = editTextAmount.text.toString()
-        val description = editTextDescription.text.toString()
-        val selectedCategoryPosition = spinnerCategory.selectedItemPosition
-
-        // Basic validation
-        if (amountStr.isBlank()) {
-            Toast.makeText(this, "Amount cannot be empty", Toast.LENGTH_SHORT).show()
-            return
-        }
-        if (selectedCategoryPosition < 0 || categoryList.isEmpty()) {
-            Toast.makeText(this, "Please select a category", Toast.LENGTH_SHORT).show()
-            return
+    private fun setupObservers() {
+        // Observe categories for the spinner
+        viewModel.categories.observe(this) { categories ->
+            this.categoryList = categories
+            val categoryNames = categories.map { it.name }
+            val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categoryNames)
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            spinnerCategory.adapter = adapter
         }
 
-        val amount = amountStr.toDouble()
-        val selectedCategory = categoryList[selectedCategoryPosition]
-
-        // Get current date as a "YYYY-MM-DD" string
-        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val currentDate = sdf.format(Date())
-
-        // Create the Expense object. It will default to 'unsynced'.
-        val newExpense = Expense(
-            userId = currentUserId,
-            categoryId = selectedCategory.categoryId,
-            amount = amount,
-            expenseDate = currentDate,
-            description = description
-        )
-
-        // Save to database in the background
-        CoroutineScope(Dispatchers.IO).launch {
-            db.expenseDao().insertExpense(newExpense)
-            // Show a confirmation message on the UI thread
-            withContext(Dispatchers.Main) {
-                Toast.makeText(this@MainActivity, "Expense Saved Locally!", Toast.LENGTH_SHORT).show()
-                // Clear the form for the next entry
-                editTextAmount.text.clear()
-                editTextDescription.text.clear()
-            }
+        // Observe expenses for the RecyclerView
+        viewModel.expenses.observe(this) { expenses ->
+            expenseAdapter.updateData(expenses)
+            // After saving, clear the form
+            editTextAmount.text.clear()
+            editTextDescription.text.clear()
         }
-    }
 
-    // =========================================================================
-    // --- NEW SYNC FUNCTION ---
-    // =========================================================================
-    private fun syncData() {
-        // Show a message to the user that sync is starting
-        Toast.makeText(this, "Syncing data...", Toast.LENGTH_SHORT).show()
+        // Observe toast messages
+        viewModel.toastMessage.observe(this) { message ->
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        }
 
-        // Run all networking and DB operations in the background
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                // 1. Get all unsynced expenses from the local Room database
-                val unsyncedExpenses = db.expenseDao().getUnsyncedExpenses()
-
-                // If there's nothing to sync, show a message and stop.
-                if (unsyncedExpenses.isEmpty()) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(this@MainActivity, "No new data to sync.", Toast.LENGTH_SHORT).show()
-                    }
-                    return@launch
-                }
-
-                // 2. Use Retrofit to send the data to our API
-                val response = RetrofitInstance.api.syncExpenses(unsyncedExpenses)
-
-                // 3. Handle the response from the server on the Main thread
-                withContext(Dispatchers.Main) {
-                    if (response.isSuccessful && response.body()?.status == "success") {
-                        // If sync was successful, update the local database
-                        val idsToUpdate = unsyncedExpenses.map { it.expenseId }
-                        // We launch another background coroutine for this DB operation
-                        CoroutineScope(Dispatchers.IO).launch {
-                            db.expenseDao().updateSyncStatus(idsToUpdate)
-                        }
-                        Toast.makeText(this@MainActivity, "Sync successful!", Toast.LENGTH_LONG).show()
-                    } else {
-                        // If the server returned an error (e.g., 400, 500)
-                        val errorMessage = response.errorBody()?.string() ?: "Unknown sync error"
-                        Toast.makeText(this@MainActivity, "Sync failed: $errorMessage", Toast.LENGTH_LONG).show()
-                    }
-                }
-
-            } catch (e: Exception) {
-                // If there was a network error (e.g., no internet, server is down)
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, "Sync failed: ${e.message}", Toast.LENGTH_LONG).show()
-                }
-            }
+        // Observe loading state
+        viewModel.isLoading.observe(this) { isLoading ->
+            progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            buttonSync.isEnabled = !isLoading
+            buttonSaveExpense.isEnabled = !isLoading
         }
     }
 }

@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.personalfinancemanager.data.AppDatabase
 import com.example.personalfinancemanager.data.Category
 import com.example.personalfinancemanager.data.Expense
+import com.example.personalfinancemanager.data.ExpenseWithCategory
 import com.example.personalfinancemanager.data.User
 import com.example.personalfinancemanager.network.RetrofitInstance
 import kotlinx.coroutines.launch
@@ -21,8 +22,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _categories = MutableLiveData<List<Category>>()
     val categories: LiveData<List<Category>> = _categories
 
-    private val _expenses = MutableLiveData<List<Expense>>()
-    val expenses: LiveData<List<Expense>> = _expenses
+    private val _expenses = MutableLiveData<List<ExpenseWithCategory>>()
+    val expenses: LiveData<List<ExpenseWithCategory>> = _expenses
 
     private val _toastMessage = MutableLiveData<String>()
     val toastMessage: LiveData<String> = _toastMessage
@@ -58,7 +59,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private suspend fun loadExpenses() {
-        _expenses.postValue(db.expenseDao().getAllExpensesForUser(currentUserId))
+        _expenses.postValue(db.expenseDao().getAllExpensesWithCategory(currentUserId))
     }
 
     fun saveExpense(amountStr: String, description: String, selectedCategory: Category?) {

@@ -15,6 +15,12 @@ interface ExpenseDao {
     @Query("UPDATE expenses SET sync_status = 'synced' WHERE expenseId IN (:ids)")
     suspend fun updateSyncStatus(ids: List<Int>)
 
-    @Query("SELECT * FROM expenses WHERE userId = :userId ORDER BY expenseId DESC")
-    suspend fun getAllExpensesForUser(userId: Int): List<Expense>
+    @Query("""
+    SELECT e.*, c.name as categoryName
+    FROM expenses e
+    JOIN categories c ON e.categoryId = c.categoryId
+    WHERE e.userId = :userId
+    ORDER BY e.expenseId DESC
+""")
+    suspend fun getAllExpensesWithCategory(userId: Int): List<ExpenseWithCategory>
 }

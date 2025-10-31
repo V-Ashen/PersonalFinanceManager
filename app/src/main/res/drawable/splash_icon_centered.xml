@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Optional: You can set a solid background color here if you want -->
+    <!-- <item android:drawable="@android:color/white" /> -->
+
+    <!--
+        This item places your app's foreground launcher icon in the center.
+        The size is set to 120dp, which is a good starting point for a splash icon.
+        You can adjust the size if you want it bigger or smaller.
+    -->
+    <item
+        android:width="120dp"
+        android:height="120dp"
+        android:drawable="@drawable/ic_launcher_foreground"
+        android:gravity="center" />
+
+</layer-list>

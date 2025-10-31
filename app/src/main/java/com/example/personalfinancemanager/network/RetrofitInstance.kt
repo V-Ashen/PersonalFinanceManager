@@ -10,7 +10,7 @@ object RetrofitInstance {
     // IMPORTANT: Use 10.0.2.2 for the Android Emulator to connect to your computer's localhost.
     // If you are testing on a REAL device, you must use your computer's network IP address
     // (e.g., "http://192.168.1.100:5000/").
-    private const val BASE_URL = "http://10.36.36.223:5000/"
+    private const val BASE_URL = "http://192.168.8.100:5000/"
 
     // Create a logger to see network request details in Logcat (very useful for debugging)
     private val loggingInterceptor = HttpLoggingInterceptor().apply {

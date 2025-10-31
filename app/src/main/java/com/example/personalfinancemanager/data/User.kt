@@ -1,5 +1,6 @@
 package com.example.personalfinancemanager.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -8,5 +9,7 @@ data class User(
     @PrimaryKey(autoGenerate = true)
     val userId: Int = 0, // Let Room handle generating IDs
     val username: String,
-    val email: String
+    val email: String,
+    @ColumnInfo(name = "password_hash")
+    val passwordHash: String?
 )

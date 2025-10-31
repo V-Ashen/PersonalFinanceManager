@@ -22,6 +22,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _categories = MutableLiveData<List<Category>>()
     val categories: LiveData<List<Category>> = _categories
 
+    private val _isSyncEnabled = MutableLiveData<Boolean>()
+    val isSyncEnabled: LiveData<Boolean> = _isSyncEnabled
+
     private val _expenses = MutableLiveData<List<ExpenseWithCategory>>()
     val expenses: LiveData<List<ExpenseWithCategory>> = _expenses
 
@@ -43,7 +46,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private suspend fun setupInitialData() {
         val user = db.userDao().getUserById(currentUserId)
         if (user == null) {
-            db.userDao().insertUser(User(userId = currentUserId, username = "testuser", email = "test@email.com"))
+            db.userDao().insertUser(User(userId = currentUserId, username = "testuser", passwordHash = "12345" ,email = "test@email.com"))
         }
         val existingCategories = db.categoryDao().getCategoriesForUser(currentUserId)
         if (existingCategories.isEmpty()) {
@@ -59,7 +62,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private suspend fun loadExpenses() {
-        _expenses.postValue(db.expenseDao().getAllExpensesWithCategory(currentUserId))
+        val allExpenses = db.expenseDao().getAllExpensesWithCategory(currentUserId)
+        _expenses.postValue(allExpenses)
+        // Check if there are unsynced expenses
+        val hasUnsyncedData = allExpenses.any { it.expense.syncStatus != "synced" }
+        _isSyncEnabled.postValue(hasUnsyncedData)
     }
 
     fun saveExpense(amountStr: String, description: String, selectedCategory: Category?) {
@@ -109,6 +116,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val idsToUpdate = unsyncedExpenses.map { it.expenseId }
                     db.expenseDao().updateSyncStatus(idsToUpdate)
                     _toastMessage.postValue("Sync successful!")
+                    _isSyncEnabled.postValue(false) // <-- Disable sync button after successful sync
                 } else {
                     _toastMessage.postValue("Sync failed: ${response.errorBody()?.string()}")
                 }

@@ -17,7 +17,7 @@ import com.example.personalfinancemanager.data.Category
 import com.example.personalfinancemanager.ui.ExpenseAdapter
 import com.example.personalfinancemanager.ui.MainViewModel
 
-class MainActivity : AppCompatActivity() {
+class ExpensesActivity : AppCompatActivity() {
 
     // --- ViewModel ---
     private val viewModel: MainViewModel by viewModels()
@@ -107,6 +107,19 @@ class MainActivity : AppCompatActivity() {
             progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
             buttonSync.isEnabled = !isLoading
             buttonSaveExpense.isEnabled = !isLoading
+        }
+
+        // Observe the sync button's enabled state
+        viewModel.isSyncEnabled.observe(this) { isEnabled ->
+            if (isEnabled) {
+                // If there is data to sync, make the button fully visible and clickable
+                buttonSync.isEnabled = true
+                buttonSync.alpha = 1.0f // 1.0f means fully opaque
+            } else {
+                // If there is no data to sync, make it half-transparent and not clickable
+                buttonSync.isEnabled = false
+                buttonSync.alpha = 0.5f // 0.5f means 50% transparent
+            }
         }
     }
 }

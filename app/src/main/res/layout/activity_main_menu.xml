@@ -5,45 +5,133 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="24dp"
-    android:gravity="center"
+    android:background="@drawable/background_gradient"
+    android:padding="32dp"
     tools:context=".ui.MainMenuActivity">
 
-    <TextView
-        android:id="@+id/textViewWelcome"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Welcome!"
-        android:textSize="32sp"
-        android:layout_marginBottom="48dp"
-        android:textStyle="bold" />
-
-    <Button
-        android:id="@+id/buttonExpenses"
+    <!-- Header Section -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:text="Expenses" />
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginTop="40dp"
+        android:layout_marginBottom="60dp">
 
-    <Button
-        android:id="@+id/buttonAddBudget"
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/ic_finance_app"
+            android:background="@drawable/logo_background"
+            android:padding="16dp" />
+
+        <TextView
+            android:id="@+id/textViewWelcome"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Welcome!"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:layout_marginTop="24dp"
+            android:letterSpacing="0.02" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Manage your finances"
+            android:textSize="16sp"
+            android:textColor="@color/light_grey"
+            android:layout_marginTop="8dp" />
+
+    </LinearLayout>
+
+    <!-- Menu Options Card -->
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:text="Add Budget Limit" />
+        app:cardCornerRadius="24dp"
+        app:cardElevation="8dp"
+        app:cardBackgroundColor="@color/white"
+        android:layout_marginBottom="24dp">
 
-    <Button
-        android:id="@+id/buttonAddSavingsGoal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:text="Add Savings Goal" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp">
 
-    <Button
+            <!-- Expenses Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonExpenses"
+                style="@style/MenuButtonStyle"
+                android:text="Expenses"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:icon="@drawable/ic_expenses"
+                app:iconGravity="textStart"
+                app:iconPadding="12dp" />
+
+            <!-- Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#999999"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp" />
+
+            <!-- Budget Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonAddBudget"
+                style="@style/MenuButtonStyle"
+                android:text="Budget Limit"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:icon="@drawable/ic_budget"
+                app:iconGravity="textStart"
+                app:iconPadding="12dp" />
+
+            <!-- Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#999999"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp" />
+
+            <!-- Savings Goal Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonAddSavingsGoal"
+                style="@style/MenuButtonStyle"
+                android:text="Savings Goal"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:icon="@drawable/ic_savings"
+                app:iconGravity="textStart"
+                app:iconPadding="12dp" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Logout Button -->
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonLogout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:text="Logout" />
+        android:layout_height="56dp"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="@color/white"
+        android:text="Logout"
+        android:textAllCaps="false"
+        android:textColor="@color/error_color"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.02"
+        app:cornerRadius="16dp"
+        app:icon="@drawable/ic_logout"
+        app:iconGravity="textStart"
+        app:iconPadding="12dp"
+        app:iconTint="@color/error_color"
+        app:strokeColor="@color/white"
+        app:strokeWidth="1dp" />
 
 </LinearLayout>

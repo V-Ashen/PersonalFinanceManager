@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- This defines the border -->
+    <stroke
+        android:width="1dp"
+        android:color="#CCCCCC" /> <!-- A light grey color -->
+
+    <!-- This defines the rounded corners -->
+    <corners
+        android:radius="4dp" />
+
+    <!-- Optional: You can set a solid background color if you want -->
+    <solid
+        android:color="@android:color/transparent" />
+
+</shape>

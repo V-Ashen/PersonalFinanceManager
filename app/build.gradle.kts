@@ -51,6 +51,8 @@ dependencies {
 
     implementation("androidx.core:core-splashscreen:1.0.1")
 
+    implementation("com.google.android.material:material:1.10.0")
+
     // Room Database Libraries
     val room_version = "2.6.0" // Use 'val' instead of 'def'
 

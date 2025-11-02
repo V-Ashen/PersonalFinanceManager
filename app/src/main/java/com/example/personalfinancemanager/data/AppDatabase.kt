@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(entities = [User::class, Category::class, Expense::class, Budget::class,
-    SavingsGoal::class], version = 3) // <-- MODIFIED
+    SavingsGoal::class], version = 4) // <-- MODIFIED
 
 abstract class AppDatabase : RoomDatabase() {
 

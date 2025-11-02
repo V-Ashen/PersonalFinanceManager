@@ -24,13 +24,11 @@ class MainMenuActivity : AppCompatActivity() {
         }
 
         addBudgetButton.setOnClickListener {
-            // We will create this activity later
-            Toast.makeText(this, "Budget screen not implemented yet", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, com.example.personalfinancemanager.ui.budget.AddBudgetActivity::class.java))
         }
 
         addSavingsGoalButton.setOnClickListener {
-            // We will create this activity later
-            Toast.makeText(this, "Savings screen not implemented yet", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, com.example.personalfinancemanager.ui.savings.AddSavingsGoalActivity::class.java))
         }
 
         logoutButton.setOnClickListener {

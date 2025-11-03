@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+
+<style name="MenuButtonStyle" parent="Widget.Material3.Button.TextButton">
+<item name="android:layout_width">match_parent</item>
+<item name="android:layout_height">60dp</item>
+<item name="android:backgroundTint">@android:color/transparent</item>
+<item name="android:textColor">@color/dark_text</item>
+<item name="android:textSize">16sp</item>
+<item name="android:textStyle">normal</item>
+<item name="cornerRadius">0dp</item>
+<item name="android:paddingStart">16dp</item>
+<item name="android:paddingEnd">16dp</item>
+</style>
+
+</resources>

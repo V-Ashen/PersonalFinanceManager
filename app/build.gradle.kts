@@ -46,6 +46,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation("com.google.android.material:material:1.8.0")
+
     // Background Processing
     implementation("androidx.work:work-runtime-ktx:2.9.0")
 
